@@ -1,0 +1,21 @@
+{
+    "numeric_features": [
+        "age",
+        "trestbps",
+        "chol",
+        "thalach",
+        "oldpeak"
+    ],
+    "categorical_features": [
+        "sex",
+        "cp",
+        "fbs",
+        "restecg",
+        "exang",
+        "slope",
+        "ca",
+        "thal"
+    ],
+    "target_column": "target",
+    "selected_model": "logistic_regression"
+}

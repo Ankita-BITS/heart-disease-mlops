@@ -1,0 +1,70 @@
+name: MLOps CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-test-train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Lint source and test code
+        run: |
+          flake8 src tests
+
+      - name: Download and prepare dataset
+        run: |
+          python src/download_data.py
+
+      - name: Train model
+        run: |
+          python src/train.py
+
+      - name: Validate packaged prediction pipeline
+        run: |
+          python src/predict.py --input model/sample_input.json
+
+      - name: Run unit tests
+        run: |
+          pytest tests -v
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts
+          path: |
+            model/heart_disease_pipeline.joblib
+            model/feature_metadata.json
+            model/sample_input.json
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-reports
+          path: |
+            reports/model_comparison.csv
+            reports/figures/

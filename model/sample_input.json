@@ -1,0 +1,17 @@
+[
+    {
+        "age":59,
+        "trestbps":138,
+        "chol":271,
+        "thalach":182,
+        "oldpeak":0.0,
+        "sex":1,
+        "cp":4,
+        "fbs":0,
+        "restecg":2,
+        "exang":0,
+        "slope":1,
+        "ca":0.0,
+        "thal":3.0
+    }
+]
