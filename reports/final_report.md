@@ -1,10 +1,12 @@
 ---
 title: "Heart Disease Prediction MLOps Pipeline"
 subtitle: "Assignment 01: End-to-End ML Model Development, CI/CD, Deployment, and Monitoring"
-author: "<INSERT_YOUR_NAME>"
-date: "<INSERT_DATE>"
+author: "2024AC05600 ANKITA GOPAKUMAR MEENAKSHI"
+date: "12/07/2026"
 geometry: margin=0.8in
 fontsize: 11pt
+mainfont: Calibri
+monofont: Consolas
 ---
 
 # Heart Disease Prediction MLOps Pipeline
@@ -18,6 +20,9 @@ fontsize: 11pt
 ### **Student ID:** 2024AC05600
 
 ### **GitHub Repository:**  https://github.com/Ankita-BITS/heart-disease-mlops
+
+### **video Reference Link:**  https://drive.google.com/file/d/1o4CMi-RLMcwGIBW6aCIH4k9LVoAE6n7G/view
+
  
 <br>
 
@@ -649,7 +654,9 @@ The Kubernetes deployment includes:
 Apply deployment:
 
 ```bash
-kubectl apply -f deployment/
+kubectl apply -f .\deployment\namespace.yaml
+kubectl apply -f .\deployment\deployment.yaml
+kubectl apply -f .\deployment\service.yaml
 ```
 
 Verify deployment:
@@ -685,6 +692,7 @@ kubectl port-forward -n heart-disease service/heart-disease-api-service 8000:800
 </p>
 
 <p align="center"><b>Figure 20.</b> Kubernetes prediction endpoint response.</p>
+<div style="page-break-after: always;"></div>
 
 ---
 
@@ -762,61 +770,268 @@ Monitoring URLs:
 </p>
 
 <p align="center"><b>Figure 24.</b> API prediction logs.</p>
+
+
+<p align="center">
+  <img src="../screenshots/prometheus_query_metrics.png" width="700"/>
+</p>
+
+<p align="center"><b>Figure 25.</b> Promethus query metrics.</p>
+
+## 13.4 Grafana Monitoring Visualization
+
+Grafana was configured as the visualization layer for the monitoring stack. Prometheus was added as the Grafana data source using the Docker Compose service URL `http://prometheus:9090`.
+
+Grafana was used to query and visualize metrics collected from the FastAPI `/metrics` endpoint. This confirms that API request metrics can be viewed through a dashboarding/visualization interface instead of only through raw Prometheus queries.
+
+<p align="center">
+  <img src="../screenshots/grafana_prometheus_datasource.png" width="700"/>
+</p>
+
+<p align="center"><b>Figure 26.</b> Grafana Prometheus data source configured successfully.</p>
+
+<p align="center">
+  <img src="../screenshots/grafana_prometheus_query.png" width="700"/>
+</p>
+
+<p align="center"><b>Figure 27.</b> Grafana Explore view showing Prometheus API metrics.</p>
+
 <div style="page-break-after: always;"></div>
 
-# 14. Setup and Run Instructions
+# 14. Setup and Execution Instructions
 
-## 14.1 Clone Repository
+This section provides the steps required to reproduce the project locally, run the model training pipeline, view MLflow experiment tracking, serve the model through FastAPI, containerize the API, deploy it to Kubernetes, and run the monitoring stack.
+
+## 14.1 Clone the Repository
 
 ```bash
 git clone https://github.com/Ankita-BITS/heart-disease-mlops
-cd heart-disease-mlops
 ```
 
-## 14.2 Create Virtual Environment
+## 14.2 Create and Activate a Virtual Environment
 
-Command Prompt:
-
-```bash
-py -3.11 -m venv venv
-venv\Scripts\activate.bat
-```
-
-PowerShell:
+For Windows PowerShell:
 
 ```powershell
+py -3.11 -m venv venv
 .\venv\Scripts\Activate.ps1
 ```
 
-## 14.3 Install Dependencies
+For Windows Command Prompt:
+
+```cmd
+py -3.11 -m venv venv
+venv\Scripts\activate
+```
+
+For macOS/Linux:
 
 ```bash
-python -m pip install --upgrade pip
+python3.11 -m venv venv
+source venv/bin/activate
+```
+
+## 14.3 Install Project Dependencies
+
+```bash
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 ```
 
-## 14.4 Download Dataset
+The project dependencies include packages for data processing, model training, experiment tracking, API serving, testing, linting, and monitoring.
+
+## 14.4 Download and Prepare the Dataset
+
+The dataset is downloaded using the `ucimlrepo` package and saved into the project data folders.
 
 ```bash
 python src/download_data.py
 ```
 
-## 14.5 Train Model
+Expected outputs:
+
+```text
+data/raw/heart_disease_raw.csv
+data/processed/heart_disease_clean.csv
+```
+
+## 14.5 Run Exploratory Data Analysis
+
+The EDA notebook is located at:
+
+```text
+notebooks/01_eda.ipynb
+```
+
+This notebook includes:
+
+- Missing value analysis
+- Class balance visualization
+- Feature distributions
+- Correlation heatmap
+- Feature relationship analysis
+
+EDA figures are saved under:
+
+```text
+reports/figures/
+```
+
+## 14.6 Train and Compare Models
+
+Run the training script:
 
 ```bash
 python src/train.py
 ```
 
-## 14.6 Run Prediction Script
+The training script performs preprocessing, model training, hyperparameter tuning, cross-validation, model comparison, MLflow logging, and model packaging.
+
+The models evaluated include:
+
+- Logistic Regression
+- Random Forest Classifier
+
+Expected outputs:
+
+```text
+model/heart_disease_pipeline.joblib
+model/feature_metadata.json
+model/sample_input.json
+reports/model_comparison.csv
+reports/figures/
+```
+
+## 14.7 View MLflow Experiment Tracking
+
+The project uses MLflow to track model experiments, hyperparameters, metrics, plots, and trained model artifacts.
+
+Start the MLflow UI:
+
+```bash
+python -m mlflow ui --backend-store-uri sqlite:///mlflow.db --host 127.0.0.1 --port 5000
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5000
+```
+
+The MLflow experiment is named:
+
+```text
+heart_disease_classification
+```
+
+In the MLflow UI, review:
+
+- Logistic Regression run
+- Random Forest run
+- Accuracy, precision, recall, F1-score, and ROC-AUC metrics
+- Confusion matrix artifacts
+- ROC curve artifacts
+- Saved model artifacts
+- Final selected model run
+
+Screenshots from MLflow are included in the report as experiment tracking evidence.
+
+## 14.8 Run Local Prediction from the Saved Pipeline
+
+After training, test the packaged model pipeline using the sample input file:
 
 ```bash
 python src/predict.py --input model/sample_input.json
 ```
 
-## 14.7 Run FastAPI Locally
+The script loads the saved preprocessing and model pipeline and returns the predicted class and confidence probability.
+
+## 14.9 Run Unit Tests and Lint Checks
+
+Run unit tests:
+
+```bash
+pytest tests -v
+```
+
+Run lint checks:
+
+```bash
+flake8 src tests
+```
+
+These checks are also executed automatically in the GitHub Actions CI workflow.
+
+## 14.10 Run the FastAPI Application Locally
+
+Start the API locally:
 
 ```bash
 python -m uvicorn api.app:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Open the Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health check endpoint:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+Prediction endpoint:
+
+```text
+http://127.0.0.1:8000/predict
+```
+
+Metrics endpoint:
+
+```text
+http://127.0.0.1:8000/metrics
+```
+
+Example prediction request body:
+
+```json
+{
+  "age": 63,
+  "sex": 1,
+  "cp": 3,
+  "trestbps": 145,
+  "chol": 233,
+  "fbs": 1,
+  "restecg": 0,
+  "thalach": 150,
+  "exang": 0,
+  "oldpeak": 2.3,
+  "slope": 0,
+  "ca": 0,
+  "thal": 1
+}
+```
+
+## 14.11 Build and Run the Docker Container
+
+Build the Docker image:
+
+```bash
+docker build -t heart-disease-api:latest .
+```
+
+Run the container:
+
+```bash
+docker run -d -p 8000:8000 --name heart-disease-api-container heart-disease-api:latest
+```
+
+Check that the container is running:
+
+```bash
+docker ps
 ```
 
 Open:
@@ -825,44 +1040,42 @@ Open:
 http://127.0.0.1:8000/docs
 ```
 
-## 14.8 Run Tests
+Stop and remove the container when finished:
 
 ```bash
-python -m pytest tests -v
+docker stop heart-disease-api-container
+docker rm heart-disease-api-container
 ```
 
-## 14.9 Run Docker
+## 14.12 Deploy to Local Kubernetes
 
-```bash
-docker build -t heart-disease-api:latest .
-docker run -d -p 8000:8000 --name heart-disease-api-container heart-disease-api:latest
-```
-
-## 14.10 Run Kubernetes Deployment
-
-```bash
-kubectl apply -f deployment/
-```
-
-## 14.11 Run Monitoring Stack
-
-```bash
-docker compose -f docker-compose.monitoring.yml up --build
-```
-
----
-
-# 15. Deployment Access Instructions
-
-The deployment was performed locally using Docker Desktop Kubernetes. Since this is a local deployment, there is no public cloud URL.
-
-Local API access:
+The project includes Kubernetes manifests under:
 
 ```text
-http://127.0.0.1:8000/docs
+deployment/
 ```
 
-If Kubernetes service access is not directly available, use:
+Apply the Kubernetes deployment and service:
+
+```bash
+kubectl apply -f .\deployment\namespace.yaml
+kubectl apply -f .\deployment\deployment.yaml
+kubectl apply -f .\deployment\service.yaml
+```
+
+Check the deployed resources:
+
+```bash
+kubectl get all -n heart-disease
+```
+
+Wait for the deployment to become available:
+
+```bash
+kubectl wait --for=condition=available deployment/heart-disease-api -n heart-disease --timeout=120s
+```
+
+If direct service access is not available, use port forwarding:
 
 ```bash
 kubectl port-forward -n heart-disease service/heart-disease-api-service 8000:8000
@@ -874,9 +1087,131 @@ Then open:
 http://127.0.0.1:8000/docs
 ```
 
+Check Kubernetes logs:
+
+```bash
+kubectl logs -n heart-disease deployment/heart-disease-api --tail=50
+```
+
+```bash
+kubectl delete -f deployment/
+```
+
+## 14.13 Run Prometheus and Grafana Monitoring Stack
+
+The monitoring stack is started using Docker Compose.
+
+```bash
+docker compose -f docker-compose.monitoring.yml up --build
+```
+
+This starts:
+
+- FastAPI model serving API
+- Prometheus
+- Grafana
+
+Open the services:
+
+```text
+FastAPI Swagger UI: http://127.0.0.1:8000/docs
+FastAPI metrics:    http://127.0.0.1:8000/metrics
+Prometheus:         http://127.0.0.1:9090
+Grafana:            http://127.0.0.1:3000
+```
+
+Grafana login:
+
+```text
+Username: admin
+Password: admin
+```
+
+In Grafana, configure Prometheus as the data source using:
+
+```text
+http://prometheus:9090
+```
+
+Prometheus scrapes the FastAPI `/metrics` endpoint and Grafana is used to visualize API request count, request duration, and total API traffic.
+
+Example Prometheus/Grafana queries:
+
+```promql
+http_requests_total
+```
+
+```promql
+sum(increase(http_request_duration_seconds_count[10m]))
+```
+
+```promql
+rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])
+```
+
+Generate sample API traffic:
+
+```powershell
+$body = @{
+    age = 63
+    sex = 1
+    cp = 3
+    trestbps = 145
+    chol = 233
+    fbs = 1
+    restecg = 0
+    thalach = 150
+    exang = 0
+    oldpeak = 2.3
+    slope = 0
+    ca = 0
+    thal = 1
+} | ConvertTo-Json
+
+1..10 | ForEach-Object { Invoke-RestMethod -Uri "http://127.0.0.1:8000/predict" -Method Post -Body $body -ContentType "application/json" }
+```
+
+View API logs:
+
+```bash
+docker logs heart-disease-api-container
+```
+
+Stop the monitoring stack:
+
+```bash
+docker compose -f docker-compose.monitoring.yml down
+```
+
+## 14.14 Run GitHub Actions CI/CD Pipeline
+
+The CI/CD workflow is defined in:
+
+```text
+.github/workflows/ci.yml
+```
+
+The workflow runs automatically on push and pull request. It can also be manually triggered from:
+
+```text
+GitHub Repository > Actions > MLOps CI Pipeline > Run workflow
+```
+
+The workflow performs:
+
+- Dependency installation
+- Linting with flake8
+- Dataset download
+- Model training
+- Prediction pipeline validation
+- Unit testing with pytest
+- Docker image build
+- Upload of model and report artifacts
+
+Successful GitHub Actions screenshots are included in the report as CI/CD evidence.
 ---
 
-# 16. Implementation Challenges and Resolutions
+# 15. Implementation Challenges and Resolutions
 
 | Challenge | Resolution |
 |---|---|
@@ -888,7 +1223,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-# 17. Conclusion
+# 16. Conclusion
 
 This project successfully demonstrates an end-to-end MLOps workflow for heart disease prediction. The final system includes reproducible preprocessing, model training, experiment tracking, model packaging, API serving, containerization, automated testing, CI/CD, Kubernetes deployment, and monitoring.
 
@@ -896,7 +1231,7 @@ The final trained model is served through a FastAPI API and can be executed loca
 
 ---
 
-# 18. References
+# 17. References
 
 1. UCI Machine Learning Repository: Heart Disease Dataset.
 2. Scikit-learn documentation.

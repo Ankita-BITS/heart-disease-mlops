@@ -1,10 +1,10 @@
-## Heart Disease MLOps Project
+# Heart Disease MLOps Project
 
-### Project Overview
+## Project Overview
 
 This project builds an end-to-end machine learning pipeline for predicting heart disease risk using the Heart Disease UCI dataset. The project includes data acquisition, exploratory data analysis, model development, experiment tracking, model packaging, API deployment, CI/CD, Docker, Kubernetes, and monitoring.
 
-### Project Structure
+## Project Structure
 
 ```text
 heart-disease-mlops/
@@ -20,26 +20,42 @@ heart-disease-mlops/
 ├── environment.yml
 └── README.md
 ```
-### Setup Instructions
-#### 1. Create and activate a Python 3.11 virtual environment:
-```bash
+## Setup Instructions
+###  Create and activate a Python 3.11 virtual environment:
+For Windows PowerShell:
+
+```powershell
 py -3.11 -m venv venv
-venv\Scripts\activate.bat
+venv\Scripts\activate
 ```
-#### 2. Install dependencies:
+
+For Windows Command Prompt:
+
+```cmd
+py -3.11 -m venv venv
+venv\Scripts\activate
+```
+
+For macOS/Linux:
+
+```bash
+python3.11 -m venv venv
+source venv/bin/activate
+```
+### Install dependencies:
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
-#### 3. Download and prepare the dataset:
+### Download and prepare the dataset:
 ```bash
 python src/download_data.py
 ```
-#### 4. Train the model:
+### Train the model:
 ```bash
 python src/train.py
 ```
-#### 5. Experiment Tracking with MLflow
+### Experiment Tracking with MLflow
 
 MLflow was used to track model training experiments for the Heart Disease classification project.
 
@@ -60,15 +76,39 @@ The following items were logged for each model run:
 To run model training with MLflow tracking:
 
 ```bash
-python src/train.py
+python -m mlflow ui --backend-store-uri sqlite:///mlflow.db --host 127.0.0.1 --port 5000
 ```
 
-#### 6. Run prediction using the saved model:
+Then open:
+
+```text
+http://127.0.0.1:5000
+```
+
+The MLflow experiment is named:
+
+```text
+heart_disease_classification
+```
+
+In the MLflow UI, review:
+
+- Logistic Regression run
+- Random Forest run
+- Accuracy, precision, recall, F1-score, and ROC-AUC metrics
+- Confusion matrix artifacts
+- ROC curve artifacts
+- Saved model artifacts
+- Final selected model run
+
+Screenshots from MLflow are included in the report as experiment tracking evidence.
+
+### Run prediction using the saved model:
 ```bash
 python src/predict.py --input model/sample_input.json
 ```
 
-#### 7. Model Packaging and Reproducibility
+### Model Packaging and Reproducibility
 
 The final model is saved as a complete sklearn pipeline:
 
@@ -115,6 +155,57 @@ To run linting locally:
 ```bash
 python -m flake8 src tests
 ```
+### Run the FastAPI Application Locally
+
+Start the API locally:
+
+```bash
+python -m uvicorn api.app:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Open the Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health check endpoint:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+Prediction endpoint:
+
+```text
+http://127.0.0.1:8000/predict
+```
+
+Metrics endpoint:
+
+```text
+http://127.0.0.1:8000/metrics
+```
+
+Example prediction request body:
+
+```json
+{
+  "age": 63,
+  "sex": 1,
+  "cp": 3,
+  "trestbps": 145,
+  "chol": 233,
+  "fbs": 1,
+  "restecg": 0,
+  "thalach": 150,
+  "exang": 0,
+  "oldpeak": 2.3,
+  "slope": 0,
+  "ca": 0,
+  "thal": 1
+}
+```
 ### Docker Containerization
 
 The model-serving API is containerized using Docker. The Docker image includes the FastAPI application, trained model pipeline, source code, and all required dependencies.
@@ -132,15 +223,21 @@ docker build -t heart-disease-api:latest .
 ```bash
 docker run -d -p 8000:8000 --name heart-disease-api-container heart-disease-api:latest
 ```
-#### 3. Open API Documentation
+#### 3. Check that the container is running:
+
+```bash
+docker ps
+```
+
+#### 4. Open API Documentation
 ```text
 http://127.0.0.1:8000/docs
 ```
-#### 4. Health Check
+#### 5. Health Check
 ```text
 http://127.0.0.1:8000/health
 ```
-#### 5. Sample Prediction Request
+#### 6. Sample Prediction Request
 ```powershell
 $body = @{
     age = 63
@@ -164,7 +261,7 @@ Invoke-RestMethod `
     -Body $body `
     -ContentType "application/json"
 ```
-#### 6. Stop Container
+#### 7. Stop Container
 ```bash
 docker stop heart-disease-api-container
 docker rm heart-disease-api-container
@@ -201,6 +298,11 @@ kubectl apply -f .\deployment\service.yaml
 kubectl get all -n heart-disease
 kubectl get pods -n heart-disease
 kubectl get svc -n heart-disease
+```
+Wait for the deployment to become available:
+
+```bash
+kubectl wait --for=condition=available deployment/heart-disease-api -n heart-disease --timeout=120s
 ```
 #### 5. Access API
 If the LoadBalancer is available locally, open:
